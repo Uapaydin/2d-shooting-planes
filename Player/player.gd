@@ -124,17 +124,15 @@ func _try_fire() -> void:
 	_can_fire = false
 
 	var yaw_rad: float = deg_to_rad(yaw_deg)
-	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))  # forward in 2D
-	var nose_offset_px: float = 28.0                              # tweak to taste
-
-	# single muzzle position that tracks yaw:
+	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))   # forward in 2D
+	var nose_offset_px := 28.0                                     # tweak to match your model
 	var muzzle := global_position + heading * nose_offset_px
-	_spawn_bullet(muzzle, heading)
 
-	# OPTIONAL: dual-shot (tiny outward spread that respects yaw)
-	# var spread := 0.08  # radians
-	# _spawn_bullet(muzzle, _rotate2d(heading, +spread))
-	# _spawn_bullet(muzzle, _rotate2d(heading, -spread))
+	var b: Area2D = _bullet.instantiate()
+	b.global_position = muzzle
+	if b.has_method("set_direction"):
+		b.call("set_direction", heading)
+	get_tree().current_scene.add_child(b)
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	_can_fire = true
