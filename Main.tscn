@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://cqbooeme1afgt"]
+
+[ext_resource type="Texture2D" uid="uid://dvofxvwtie2tq" path="res://assets/backgrounds/sky_clouds_01.png" id="1_glv2v"]
+[ext_resource type="Script" uid="uid://dmjuhvcw7db7r" path="res://background_scroll.gd" id="1_uu6xs"]
+[ext_resource type="PackedScene" uid="uid://caudxlops7hr" path="res://Player/Player.tscn" id="3_r0du0"]
+
+[node name="Main" type="Node2D"]
+
+[node name="Background" type="Parallax2D" parent="."]
+script = ExtResource("1_uu6xs")
+
+[node name="Sprite2D" type="Sprite2D" parent="Background"]
+texture_repeat = 2
+texture = ExtResource("1_glv2v")
+region_rect = Rect2(0, 0, 480, 1600)
+
+[node name="Player" parent="." instance=ExtResource("3_r0du0")]

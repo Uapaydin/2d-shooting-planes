@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3 uid="uid://caudxlops7hr"]
+
+[ext_resource type="Script" uid="uid://bsudwta5y8uds" path="res://Player/player.gd" id="1_3qydi"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_l2ndj"]
+
+[sub_resource type="Environment" id="Environment_0rwas"]
+background_mode = 3
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_3qydi")
+
+[node name="View" type="Sprite2D" parent="."]
+
+[node name="Hitbox" type="CollisionPolygon2D" parent="."]
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+render_target_update_mode = 4
+
+[node name="Player3D" type="Node3D" parent="SubViewport"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SubViewport/Player3D"]
+mesh = SubResource("BoxMesh_l2ndj")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="SubViewport/Player3D"]
+transform = Transform3D(0.90630776, -0.29883623, 0.29883623, 0, 0.70710677, 0.70710677, -0.42261827, -0.6408563, 0.6408563, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="SubViewport/Player3D"]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.8, 3.8)
+current = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="SubViewport/Player3D"]
+environment = SubResource("Environment_0rwas")
