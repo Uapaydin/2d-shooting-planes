@@ -3,6 +3,10 @@ extends CharacterBody2D
 @export var speed: float = 520.0
 @export var max_tilt_deg: float = 18.0
 @export var tilt_lerp: float = 10.0
+@export var fire_cooldown: float = 0.12
+
+var _can_fire := true
+var _bullet := preload("res://scenes/bullet/Bullet.tscn")
 
 var view: Sprite2D = null
 var sv: SubViewport = null
@@ -67,6 +71,11 @@ func _ready() -> void:
 	print_tree_pretty()
 	print("[Player] SV size:", sv.size, "  tex null?", sv.get_texture() == null)
 
+	view.texture = sv.get_texture()       # bind now
+	await get_tree().process_frame
+	view.texture = sv.get_texture()       # rebind to be safe after first render
+	add_to_group("player")
+
 func _physics_process(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
 	if Input.is_action_pressed("ui_right"): dir.x += 1.0
@@ -92,6 +101,9 @@ func _physics_process(delta: float) -> void:
 	if ship_mesh != null:
 		ship_mesh.rotation_degrees.z = -tilt_deg
 		
+	if Input.is_action_pressed("ui_accept"): # Space/Enter default; remap if you like
+		_try_fire()
+
 func _ensure_placeholder_3d() -> void:
 	# Mesh
 	if model.get_node_or_null("MeshInstance3D") == null:
@@ -116,3 +128,18 @@ func _ensure_placeholder_3d() -> void:
 		light.name = "DirectionalLight3D"
 		light.rotation_degrees = Vector3(-45, 25, 0)
 		model.add_child(light)
+		
+
+		
+func _try_fire() -> void:
+	if not _can_fire:
+		return
+	_can_fire = false
+
+	var b = _bullet.instantiate()
+	# spawn slightly above nose; tweak offset to match your box
+	b.global_position = global_position + Vector2(0, -30)
+	get_tree().current_scene.add_child(b)
+
+	await get_tree().create_timer(fire_cooldown).timeout
+	_can_fire = true
