@@ -3,20 +3,35 @@ extends Node2D
 @export var enemy_scene: PackedScene = preload("res://scenes/enemy/Enemy.tscn")
 @export var spawn_interval: float = 0.9
 @export var x_margin: float = 24.0
+var game_over := false
 
 func _ready() -> void:
-	print("[Main] ready")
 	randomize()
-	# sanity: spawn a few immediately so you SEE them even if loop fails
-	for i in 3:
-		_spawn_enemy()
-	# start loop after one frame (avoids edge timing)
+	if has_node("Player"):
+		$Player.connect("died", Callable(self, "_on_player_died"))
 	call_deferred("_spawn_loop")
 
 func _spawn_loop() -> void:
-	while is_inside_tree():
+	while is_inside_tree() and not game_over:
 		await get_tree().create_timer(spawn_interval).timeout
-		_spawn_enemy()
+		if not game_over: _spawn_enemy()
+		
+func _on_player_died() -> void:
+	game_over = true
+	_show_restart()
+
+func _show_restart() -> void:
+	var l := Label.new()
+	l.text = "GAME OVER\nPress Enter"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.scale = Vector2(2,2)
+	add_child(l)
+	l.position = get_viewport_rect().size * 0.5
+	
+func _unhandled_input(e: InputEvent) -> void:
+	if game_over and e.is_action_pressed("ui_accept"):
+		get_tree().reload_current_scene()
 
 func _spawn_enemy() -> void:
 	if enemy_scene == null:

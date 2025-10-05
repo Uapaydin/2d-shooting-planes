@@ -25,6 +25,8 @@ var yaw_deg: float = 0.0         # current yaw
 
 var _can_fire: bool = true
 var _bullet: PackedScene = preload("res://scenes/bullet/Bullet.tscn")
+var dead: bool = false
+signal died
 
 func _ready() -> void:
 	# 2D view
@@ -73,6 +75,8 @@ func _ready() -> void:
 	global_position = Vector2(vp.x * 0.5, vp.y * 0.86)
 
 	add_to_group("player")
+	if has_node("Hitbox"):
+		$Hitbox.add_to_group("player_hitbox")
 
 func _physics_process(delta: float) -> void:
 	# Input & movement
@@ -116,26 +120,35 @@ func _physics_process(delta: float) -> void:
 		_try_fire()
 
 func _try_fire() -> void:
-	if not _can_fire:
-		return
+	if not _can_fire: return
 	_can_fire = false
 
-	var b: Node2D = _bullet.instantiate()
-	b.global_position = global_position + Vector2(0, -30)
-
 	var yaw_rad: float = deg_to_rad(yaw_deg)
-	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))
-	# optional tiny roll bias:
-	# heading.x += 0.15 * sin(deg_to_rad(tilt_deg))
+	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))  # forward in 2D
+	var nose_offset_px: float = 28.0                              # tweak to taste
 
-	# set direction safely
-	if b.has_method("set_direction"):
-		b.call("set_direction", heading)
+	# single muzzle position that tracks yaw:
+	var muzzle := global_position + heading * nose_offset_px
+	_spawn_bullet(muzzle, heading)
 
-	get_tree().current_scene.add_child(b)
+	# OPTIONAL: dual-shot (tiny outward spread that respects yaw)
+	# var spread := 0.08  # radians
+	# _spawn_bullet(muzzle, _rotate2d(heading, +spread))
+	# _spawn_bullet(muzzle, _rotate2d(heading, -spread))
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	_can_fire = true
+
+func _spawn_bullet(pos: Vector2, dir: Vector2) -> void:
+	var b: Area2D = _bullet.instantiate()
+	b.global_position = pos
+	if b.has_method("set_direction"):
+		b.call("set_direction", dir.normalized())
+	get_tree().current_scene.add_child(b)
+
+func _rotate2d(v: Vector2, ang: float) -> Vector2:
+	var c := cos(ang); var s := sin(ang)
+	return Vector2(v.x * c - v.y * s, v.x * s + v.y * c)
 
 # Finds the first Node3D under 'root' that has a MeshInstance3D descendant.
 func _find_plane_root(root: Node) -> Node3D:
@@ -157,3 +170,9 @@ func _has_mesh_descendant(n: Node) -> bool:
 		if _has_mesh_descendant(c):
 			return true
 	return false
+	
+func die() -> void:
+	if dead: return
+	dead = true
+	emit_signal("died")
+	queue_free()

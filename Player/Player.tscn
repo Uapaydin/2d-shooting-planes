@@ -1,7 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://caudxlops7hr"]
+[gd_scene load_steps=5 format=3 uid="uid://caudxlops7hr"]
 
 [ext_resource type="Script" uid="uid://bsudwta5y8uds" path="res://Player/player.gd" id="1_3qydi"]
 [ext_resource type="PackedScene" uid="uid://3gcrxnvfurr4" path="res://assets/player/low_poly_plane.glb" id="2_q3lat"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q3lat"]
+radius = 20.0
 
 [sub_resource type="Environment" id="Environment_0rwas"]
 background_mode = 3
@@ -11,7 +14,10 @@ script = ExtResource("1_3qydi")
 
 [node name="View" type="Sprite2D" parent="."]
 
-[node name="Hitbox" type="CollisionPolygon2D" parent="."]
+[node name="Hitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_q3lat")
 
 [node name="SubViewport" type="SubViewport" parent="."]
 transparent_bg = true
