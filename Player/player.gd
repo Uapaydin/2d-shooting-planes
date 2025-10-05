@@ -15,7 +15,8 @@ extends CharacterBody2D
 
 # NEW: Intro + bounds
 @export var intro_time: float = 0.9           # seconds to fly in
-@export var bottom_margin: float = 320.0      # how far above bottom the player can go
+@export var bottom_margin: float = 180.0      # how far above bottom the player can go
+@export var intro_fly_target_height: float = 350.0      # how far above bottom the player can go
 
 var view: Sprite2D
 var sv: SubViewport
@@ -78,7 +79,7 @@ func _ready() -> void:
 
 	# --- Intro fly-in from below screen, then enable controls
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	var target_pos: Vector2 = Vector2(vp.x * 0.5, vp.y - bottom_margin)  # resting spot
+	var target_pos: Vector2 = Vector2(vp.x * 0.5, vp.y - intro_fly_target_height)  # resting spot
 
 	_control_enabled = false
 	global_position = Vector2(target_pos.x, vp.y + 140.0)  # start off-screen below
