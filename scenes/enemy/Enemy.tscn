@@ -1,11 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://b1k22a7i42jve"]
+[gd_scene load_steps=4 format=3 uid="uid://b1k22a7i42jve"]
 
 [ext_resource type="Texture2D" uid="uid://drqxt3w61m4ug" path="res://assets/enemies/enemy_plane.png" id="1_sjakr"]
+[ext_resource type="Script" uid="uid://b8nky5wxre8ln" path="res://scenes/enemy/enemy.gd" id="1_vwhkw"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vwhkw"]
 size = Vector2(13, 54)
 
 [node name="Enemy" type="Area2D"]
+script = ExtResource("1_vwhkw")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 8

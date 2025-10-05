@@ -31,7 +31,5 @@ environment = SubResource("Environment_0rwas")
 
 [node name="ShipRoot" type="Node3D" parent="SubViewport/Player3D"]
 
-[node name="YawPivot" type="Node3D" parent="SubViewport/Player3D/ShipRoot"]
-
-[node name="Plane" parent="SubViewport/Player3D/ShipRoot/YawPivot" instance=ExtResource("2_q3lat")]
-transform = Transform3D(-0.2, 4.7224916e-08, -5.2440448e-09, 3.0361693e-09, 0.034729738, 0.19696154, 4.741808e-08, 0.19696154, -0.034729738, 0, 0, 0)
+[node name="Plane" parent="SubViewport/Player3D/ShipRoot" instance=ExtResource("2_q3lat")]
+transform = Transform3D(-0.2, 1.7484556e-08, 0, 3.0361615e-09, 0.03472964, 0.19696155, 1.7218925e-08, 0.19696155, -0.03472964, 0, 0, 0)
