@@ -10,7 +10,12 @@ extends CharacterBody2D
 @export var max_yaw_deg: float = 8.0
 @export var yaw_lerp: float = 8.0
 
+# Shooting
 @export var fire_cooldown: float = 0.12
+
+# NEW: Intro + bounds
+@export var intro_time: float = 0.9           # seconds to fly in
+@export var bottom_margin: float = 320.0      # how far above bottom the player can go
 
 var view: Sprite2D
 var sv: SubViewport
@@ -18,15 +23,15 @@ var model: Node3D
 var ship_root: Node3D
 var cam3d: Camera3D
 
-var yaw_pivot: Node3D            # yaw on LOCAL Y
+var yaw_pivot: Node3D            # yaw (Y) + roll (Z) on same pivot
 
 var tilt_deg: float = 0.0        # current roll
 var yaw_deg: float = 0.0         # current yaw
 
 var _can_fire: bool = true
 var _bullet: PackedScene = preload("res://scenes/bullet/Bullet.tscn")
-var dead: bool = false
-signal died
+
+var _control_enabled: bool = false   # NEW: lock input during intro
 
 func _ready() -> void:
 	# 2D view
@@ -60,25 +65,37 @@ func _ready() -> void:
 	ship_root = get_node_or_null("SubViewport/Player3D/ShipRoot") as Node3D
 	cam3d = get_node_or_null("SubViewport/Player3D/Camera3D") as Camera3D
 
-	# Ensure YawPivot under ShipRoot, and Plane under YawPivot
+	# Ensure YawPivot under ShipRoot
 	if ship_root != null:
 		yaw_pivot = ship_root.get_node_or_null("YawPivot") as Node3D
-	
 
 	# bind SubViewport texture
 	view.texture = sv.get_texture()
 	await get_tree().process_frame
 	view.texture = sv.get_texture()
 
-	# start position
-	var vp: Vector2 = get_viewport().get_visible_rect().size
-	global_position = Vector2(vp.x * 0.5, vp.y * 0.86)
-
 	add_to_group("player")
-	if has_node("Hitbox"):
-		$Hitbox.add_to_group("player_hitbox")
+
+	# --- Intro fly-in from below screen, then enable controls
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var target_pos: Vector2 = Vector2(vp.x * 0.5, vp.y - bottom_margin)  # resting spot
+
+	_control_enabled = false
+	global_position = Vector2(target_pos.x, vp.y + 140.0)  # start off-screen below
+	await get_tree().process_frame
+
+	var tw: Tween = create_tween()
+	tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "global_position", target_pos, intro_time)
+	await tw.finished
+
+	_control_enabled = true
 
 func _physics_process(delta: float) -> void:
+	# During intro: let the tween drive position (no input, no clamp).
+	if not _control_enabled:
+		return
+
 	# Input & movement
 	var dir: Vector2 = Vector2.ZERO
 	if Input.is_action_pressed("ui_right"): dir.x += 1.0
@@ -91,29 +108,29 @@ func _physics_process(delta: float) -> void:
 	velocity = dir * speed
 	move_and_slide()
 
+	# Screen bounds (bottom limited above by bottom_margin)
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	global_position.x = clampf(global_position.x, 24.0, vp.x - 24.0)
-	global_position.y = clampf(global_position.y, 24.0, vp.y - 24.0)
+	var left   := 24.0
+	var right  := vp.x - 24.0
+	var top    := 24.0
+	var bottom := vp.y - bottom_margin
+	global_position.x = clampf(global_position.x, left, right)
+	global_position.y = clampf(global_position.y, top, bottom)
 
-	# Targets:
-	# Roll from horizontal input
+	# Targets from horizontal input
 	var target_roll: float = clampf(dir.x * max_tilt_deg, -max_tilt_deg, max_tilt_deg)
-	# Yaw from horizontal input (smaller magnitude than roll for arcade feel)
-	var target_yaw: float = clampf(dir.x * max_yaw_deg, -max_yaw_deg, max_yaw_deg)
-	# (Optional) add a tiny vertical influence to yaw:
-	# target_yaw += dir.y * (max_yaw_deg * 0.25)
+	var target_yaw:  float = clampf(dir.x * max_yaw_deg,  -max_yaw_deg,  max_yaw_deg)
 
 	# Smooth
 	var roll_alpha: float = clampf(1.0 - exp(-tilt_lerp * delta), 0.0, 1.0)
-	var yaw_alpha: float = clampf(1.0 - exp(-yaw_lerp * delta), 0.0, 1.0)
+	var yaw_alpha:  float = clampf(1.0 - exp(-yaw_lerp  * delta), 0.0, 1.0)
 	tilt_deg = lerpf(tilt_deg, target_roll, roll_alpha)
-	yaw_deg = lerpf(yaw_deg, target_yaw, yaw_alpha)
+	yaw_deg  = lerpf(yaw_deg,  target_yaw,  yaw_alpha)
 
-	# Yaw on the pivot (LOCAL Y)
+	# Apply yaw (Y) + roll (Z) on the pivot
 	if yaw_pivot != null:
-		# flip sign if yaw feels backward
-		yaw_pivot.rotation_degrees.y = yaw_deg
-		yaw_pivot.rotation_degrees.z = -tilt_deg
+		yaw_pivot.rotation_degrees.y = yaw_deg   # flip sign if needed
+		yaw_pivot.rotation_degrees.z = -tilt_deg  # flip sign if needed
 
 	# Shooting
 	if Input.is_action_pressed("ui_accept"):
@@ -140,41 +157,3 @@ func _try_fire() -> void:
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	_can_fire = true
-
-func _spawn_bullet(pos: Vector2, dir: Vector2) -> void:
-	var b: Area2D = _bullet.instantiate()
-	b.global_position = pos
-	if b.has_method("set_direction"):
-		b.call("set_direction", dir.normalized())
-	get_tree().current_scene.add_child(b)
-
-func _rotate2d(v: Vector2, ang: float) -> Vector2:
-	var c := cos(ang); var s := sin(ang)
-	return Vector2(v.x * c - v.y * s, v.x * s + v.y * c)
-
-# Finds the first Node3D under 'root' that has a MeshInstance3D descendant.
-func _find_plane_root(root: Node) -> Node3D:
-	for c in root.get_children():
-		if c == yaw_pivot:
-			continue
-		if c is Node3D:
-			if _has_mesh_descendant(c):
-				return c
-			var nested := _find_plane_root(c)
-			if nested != null:
-				return nested
-	return null
-
-func _has_mesh_descendant(n: Node) -> bool:
-	for c in n.get_children():
-		if c is MeshInstance3D:
-			return true
-		if _has_mesh_descendant(c):
-			return true
-	return false
-	
-func die() -> void:
-	if dead: return
-	dead = true
-	emit_signal("died")
-	queue_free()
