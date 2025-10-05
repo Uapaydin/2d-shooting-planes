@@ -17,7 +17,7 @@ func _physics_process(delta: float) -> void:
 		dir = Vector2.UP
 	global_position += dir.normalized() * speed * delta
 
-	# kill when fully off any edge (with a small margin)
+	# free when off any screen edge (with a small margin)
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	if global_position.x < -60 or global_position.x > vp.x + 60 \
 	or global_position.y < -60 or global_position.y > vp.y + 60:

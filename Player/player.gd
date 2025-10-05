@@ -120,13 +120,17 @@ func _physics_process(delta: float) -> void:
 		_try_fire()
 
 func _try_fire() -> void:
-	if not _can_fire: return
+	if not _can_fire:
+		return
 	_can_fire = false
 
+	# forward heading from current yaw
 	var yaw_rad: float = deg_to_rad(yaw_deg)
-	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))   # forward in 2D
-	var nose_offset_px := 28.0                                     # tweak to match your model
-	var muzzle := global_position + heading * nose_offset_px
+	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))  # 0° = straight up
+
+	# spawn from the nose so it tracks yaw visually
+	var nose_offset_px: float = 28.0  # tweak to match your model
+	var muzzle: Vector2 = global_position + heading * nose_offset_px
 
 	var b: Area2D = _bullet.instantiate()
 	b.global_position = muzzle
