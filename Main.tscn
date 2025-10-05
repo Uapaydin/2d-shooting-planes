@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://cqbooeme1afgt"]
+[gd_scene load_steps=6 format=3 uid="uid://cqbooeme1afgt"]
 
 [ext_resource type="Script" uid="uid://be186nlfbepnl" path="res://main.gd" id="1_cm0pq"]
 [ext_resource type="Texture2D" uid="uid://dvofxvwtie2tq" path="res://assets/backgrounds/sky_clouds_01.png" id="1_glv2v"]
 [ext_resource type="Script" uid="uid://dmjuhvcw7db7r" path="res://background_scroll.gd" id="1_uu6xs"]
 [ext_resource type="PackedScene" uid="uid://caudxlops7hr" path="res://Player/Player.tscn" id="3_r0du0"]
+[ext_resource type="PackedScene" uid="uid://ddh5aw7gvfh1r" path="res://ui/HUD.tscn" id="5_fos0i"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_cm0pq")
@@ -18,3 +19,5 @@ texture = ExtResource("1_glv2v")
 region_rect = Rect2(0, 0, 480, 1600)
 
 [node name="Player" parent="." instance=ExtResource("3_r0du0")]
+
+[node name="Hud" parent="." instance=ExtResource("5_fos0i")]

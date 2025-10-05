@@ -13,10 +13,10 @@ extends CharacterBody2D
 # Shooting
 @export var fire_cooldown: float = 0.12
 
-# NEW: Intro + bounds
-@export var intro_time: float = 0.9           # seconds to fly in
-@export var bottom_margin: float = 180.0      # how far above bottom the player can go
-@export var intro_fly_target_height: float = 350.0      # how far above bottom the player can go
+# Intro + bounds
+@export var intro_time: float = 0.9                 # seconds to fly in
+@export var bottom_margin: float = 180.0            # how far above bottom player may move
+@export var intro_fly_target_height: float = 350.0  # resting spot above bottom after intro
 
 var view: Sprite2D
 var sv: SubViewport
@@ -32,7 +32,10 @@ var yaw_deg: float = 0.0         # current yaw
 var _can_fire: bool = true
 var _bullet: PackedScene = preload("res://scenes/bullet/Bullet.tscn")
 
-var _control_enabled: bool = false   # NEW: lock input during intro
+var _control_enabled: bool = false   # lock input during intro
+
+var invul_time: float = 1.0
+var _invulnerable: bool = false
 
 func _ready() -> void:
 	# 2D view
@@ -76,6 +79,15 @@ func _ready() -> void:
 	view.texture = sv.get_texture()
 
 	add_to_group("player")
+
+	# Put hitbox into the group used by enemies
+	if has_node("Hitbox"):
+		$Hitbox.add_to_group("player_hitbox")
+
+	# Connect GameState signals (autoload is always present)
+	if GameState.health <= 0:
+		GameState.reset()
+	GameState.connect("player_died", Callable(self, "_on_player_died"))
 
 	# --- Intro fly-in from below screen, then enable controls
 	var vp: Vector2 = get_viewport().get_visible_rect().size
@@ -130,7 +142,7 @@ func _physics_process(delta: float) -> void:
 
 	# Apply yaw (Y) + roll (Z) on the pivot
 	if yaw_pivot != null:
-		yaw_pivot.rotation_degrees.y = yaw_deg   # flip sign if needed
+		yaw_pivot.rotation_degrees.y = yaw_deg    # flip sign if needed
 		yaw_pivot.rotation_degrees.z = -tilt_deg  # flip sign if needed
 
 	# Shooting
@@ -158,3 +170,27 @@ func _try_fire() -> void:
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	_can_fire = true
+
+func take_damage(amount: int = 1) -> void:
+	# prevents repeated hits during invulnerability
+	if _invulnerable:
+		return
+	GameState.damage_player(amount)
+	_start_invulnerability()
+
+func _start_invulnerability() -> void:
+	if _invulnerable:
+		return
+	_invulnerable = true
+	# simple blink while invulnerable
+	var tw: Tween = create_tween()
+	for i in 4:
+		tw.tween_property(self, "modulate:a", 0.3, 0.08)
+		tw.tween_property(self, "modulate:a", 1.0, 0.08)
+	# reset flag after invul_time seconds
+	await get_tree().create_timer(invul_time).timeout
+	_invulnerable = false
+
+func _on_player_died() -> void:
+	_control_enabled = false
+	# queue_free()  # uncomment if you want the ship to disappear on death

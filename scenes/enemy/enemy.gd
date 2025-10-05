@@ -23,8 +23,11 @@ func _on_area_entered(a: Area2D) -> void:
 	if a.is_in_group("player_bullet"):
 		hp -= 1
 		a.queue_free()
-		if hp <= 0: queue_free()
+		if hp <= 0:
+			GameState.add_score(100)
+			queue_free()
 	elif a.is_in_group("player_hitbox"):
 		var player := a.get_parent()
-		if player and player.has_method("die"):
-			player.call_deferred("die")
+		if player and player.has_method("take_damage"):
+			player.call("take_damage", 1)
+		queue_free()

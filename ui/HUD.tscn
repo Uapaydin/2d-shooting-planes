@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://ddh5aw7gvfh1r"]
+
+[ext_resource type="Script" uid="uid://begwbwekb8agq" path="res://ui/hud.gd" id="1_1x8ju"]
+
+[node name="Hud" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_1x8ju")
+
+[node name="ScoreLabel" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="HealthLabel" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
