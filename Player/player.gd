@@ -122,6 +122,16 @@ func _try_fire() -> void:
 
 	var b: Node2D = _bullet.instantiate()
 	b.global_position = global_position + Vector2(0, -30)
+
+	var yaw_rad: float = deg_to_rad(yaw_deg)
+	var heading: Vector2 = Vector2(sin(yaw_rad), -cos(yaw_rad))
+	# optional tiny roll bias:
+	# heading.x += 0.15 * sin(deg_to_rad(tilt_deg))
+
+	# set direction safely
+	if b.has_method("set_direction"):
+		b.call("set_direction", heading)
+
 	get_tree().current_scene.add_child(b)
 
 	await get_tree().create_timer(fire_cooldown).timeout
